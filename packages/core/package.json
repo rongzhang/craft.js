@@ -26,8 +26,8 @@
     "url": "https://github.com/prevwong/craft.js/"
   },
   "scripts": {
-    "start": "cross-env NODE_ENV=development ../../scripts/build.sh",
-    "build": "cross-env NODE_ENV=production ../../scripts/build.sh",
+    "start": "cross-env NODE_ENV=development node ../../scripts/build.js",
+    "build": "cross-env NODE_ENV=production node ../../scripts/build.js",
     "clean": "rimraf lib dist"
   },
   "bugs": {
