@@ -2,33 +2,34 @@
 
 const { execSync } = require('child_process');
 const { resolve } = require('path');
-const { mkdirSync } = require('fs');
-const rimraf = require('rimraf');
+const { copy, emptyDir, ensureDir, outputFile } = require('fs-extra');
 
 const pathSite = resolve(__dirname, '../site');
+const pathExamples = resolve(pathSite, 'examples');
+const pathPackages = resolve(__dirname, '../packages');
+const pathDocs = resolve(pathPackages, 'docs/build');
+const pathSrcExamples = resolve(pathPackages, 'examples');
+const pathNojekyll = resolve(pathSite, '.nojekyll');
+const pathCName = resolve(pathSite, 'CNAME');
 
-rimraf(pathSite,
-  { glob: false },
-  err => {
-    if (err) throw err;
+emptyDir(pathSite)
+  .then(() => ensureDir(pathExamples))
+  .then(async () => {
+    try {
+      execSync('yarn clean ');
+      execSync('yarn build:all');
+      execSync('lerna run export --stream');
 
-    execSync('yarn clean ');
-    execSync('yarn build:all');
-    execSync('lerna run export --stream');
+      await copy(resolve(pathSrcExamples, 'landing/out'), pathSite);
+      await copy(resolve(pathSrcExamples, 'landing/seo'), pathSite);
+      await copy(resolve(pathSrcExamples, 'basic/out'), resolve(pathExamples, 'basic'));
+      await copy(pathDocs, resolve(pathSite, 'r'));
 
-    mkdirSync(pathSite);
-  }
-)
+      await outputFile(pathNojekyll, '');
+      await outputFile(pathCName, 'craft.js.org');
+    } catch (error) {
+      throw error;
+    }
 
-/*
-mkdir site
-cp -r ./packages/examples/landing/out/* site/
-cp -r ./packages/examples/landing/seo/* site/
-cp -r ./packages/docs/build site/r
-mkdir site/examples
-cp -r ./packages/examples/basic/out/ site/examples/basic
-
-touch site/.nojekyll
-touch site/CNAME
-echo "craft.js.org" >> site/CNAME
-*/
+  })
+  .catch(console.error);
